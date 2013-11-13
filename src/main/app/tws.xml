@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:jdbc-ee="http://www.mulesoft.org/schema/mule/ee/jdbc" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/ee/jdbc http://www.mulesoft.org/schema/mule/ee/jdbc/current/mule-jdbc-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd" version="EE-3.4.1">
+    <apikit:config name="apiConfig" raml="tws.raml" consoleEnabled="true" consolePath="console" doc:name="Router"/>
+    <apikit:mapping-exception-strategy name="apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" />
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" />
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" />
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" />
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" />
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" />
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    <jdbc-ee:mysql-data-source name="TWS_MySQL" user="root" password="123qwe" url="jdbc:mysql://localhost:3306/tws" transactionIsolation="UNSPECIFIED" doc:name="MySQL Data Source"/>
+    <jdbc-ee:connector name="Database" dataSource-ref="TWS_MySQL" validateConnections="true" queryTimeout="-1" pollingFrequency="0" doc:name="Database">
+        <jdbc-ee:query key="Select all users" value="SELECT * FROM user"/>
+        <jdbc-ee:query key="Create new user" value="INSERT INTO user (name, email, school, location)
+VALUES (#[payload.userName],
+        #[payload.email],
+        #[payload.school],
+        #[payload.location])"/>
+
+        <jdbc-ee:query key="Create new posting" value="INSERT INTO lfg (owner, title, studySubject, startTime, endTime)
+VALUES (#[payload.owner],
+        #[payload.title],
+        #[payload.studySubject],
+        #[payload.after],
+        #[payload.before])"/>    </jdbc-ee:connector>
+    <flow name="main" doc:name="main">
+        <http:inbound-endpoint address="http://localhost:8081/api" doc:name="HTTP"/>
+        <apikit:router config-ref="apiConfig" doc:name="APIkit Router"/>
+        <exception-strategy ref="apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="delete:/lfg/{lfgID}:apiConfig" doc:name="delete:/lfg/{lfgID}:apiConfig">
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="get:/users:apiConfig" doc:name="get:/users:apiConfig">
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="get:/lfg:apiConfig" doc:name="get:/lfg:apiConfig">
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="get:/lfg/{lfgID}:apiConfig" doc:name="get:/lfg/{lfgID}:apiConfig">
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="get:/users/{userID}:apiConfig" doc:name="get:/users/{userID}:apiConfig">
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="post:/lfg:apiConfig" doc:name="post:/lfg:apiConfig">
+        <http:body-to-parameter-map-transformer doc:name="Body to Parameter Map"/>
+        <jdbc-ee:outbound-endpoint exchange-pattern="request-response" queryKey="Create new posting" queryTimeout="-1" connector-ref="Database" doc:name="Create new posting"/>
+
+    </flow>
+    <flow name="post:/users:apiConfig" doc:name="post:/users:apiConfig">
+        <http:body-to-parameter-map-transformer doc:name="Body to Parameter Map"/>
+        <jdbc-ee:outbound-endpoint exchange-pattern="request-response" queryKey="Create new user" queryTimeout="-1" connector-ref="Database" doc:name="Create new user">
+        </jdbc-ee:outbound-endpoint>
+
+    </flow>
+    <flow name="post:/lfg/{lfgID}/tweet:apiConfig" doc:name="post:/lfg/{lfgID}/tweet:apiConfig">
+        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+    </flow>
+</mule>

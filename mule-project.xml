@@ -2,4 +2,6 @@
 <mule-project xmlns="http://www.mulesoft.com/tooling/project" runtimeId="org.mule.tooling.server.3.4.1.ee" schemaVersion="3.5.0.0">
     <name>together-we-study</name>
     <description></description>
+    <muleExtension name="APIkit" qualifier="org.mule.tooling.apikit"/>
+    <muleExtension name="APIkit" qualifier="org.mule.tooling.apikit"/>
 </mule-project>
