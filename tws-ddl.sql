@@ -5,7 +5,7 @@ USE tws;
 CREATE TABLE user (
     id int AUTO_INCREMENT PRIMARY KEY,
     name varchar(100) NOT NULL,
-    email varchar(100) NOT NULL,
+    email varchar(100),
     school varchar(100),
     location varchar(100)
 );
