@@ -1,0 +1,11 @@
+{
+	"description": "A posting for a study group",
+	"properties": {
+		"ownerID": { "type": "integer" },
+		"title": { "type": "string" },
+		"studySubject": { "type": "string" },
+		"location": { "type": "string" },
+		"startTime": { "type": "integer" },
+		"endTime": { "type": "integer" }
+	}
+}

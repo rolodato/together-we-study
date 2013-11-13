@@ -1,0 +1,10 @@
+{
+	"description": "A user account",
+	"properties": {
+		"id": { "type": "integer" },
+		"name": { "type": "string" },
+		"school": { "type": "integer" },
+		"email": { "type": "string" },
+		"location": { "type": "string" }
+	}
+}

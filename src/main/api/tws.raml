@@ -1,0 +1,133 @@
+#%RAML 0.8
+title: Together We Study
+schemas:
+  - lfg: !include schema/lfg.json
+  - user: !include schema/user.json
+
+/users:
+  description: User accounts
+    
+  post:
+    description: Create a new user
+    queryParameters:
+      userName:
+        displayName: User name
+        type: string
+        required: true
+      school:
+        displayName: School
+        type: string
+      email:
+        displayName: Email address
+        type: string
+      location:
+        displayName: Location
+        type: string
+    
+  get:
+    description: Search users
+    queryParameters:
+      userName:
+        displayName: User name
+        type: string
+      school:
+        displayName: School
+        type: string
+      location:
+        displayName: Location
+        type: string
+    
+  /{userID}:
+    description: A single user account
+    uriParameters:
+      userID:
+        description: User ID
+        type: integer
+        
+    get:
+      description: View a single user by ID
+      body:
+        application/json:
+          schema: user
+
+/lfg:
+  description: Study group postings
+  
+  post:
+    description: Create a new study group posting
+    queryParameters:
+      studySubject:
+        displayName: Subject
+        description: What subject the posting is for
+        type: string
+        required: true
+      location:
+        displayName: Location
+        description: Where you intend to meet other people
+        type: string
+      owner:
+        displayName: Owner
+        description: Who is creating the posting
+        type: integer
+        required: true
+      title:
+        displayName: Title
+        description: The posting title
+        type: string
+        required: true
+      after:
+        displayName: Starting time
+        description: The starting time for the posting in minutes from 00:00
+        type: integer
+      before:
+        displayName: Ending time
+        description: The ending time for the posting in minutes from 00:00
+        type: integer
+      
+  get:
+    description: Search study group postings
+    queryParameters:
+      studySubject:
+        displayName: Subject
+        description: Filter by study subject
+        type: string
+      location:
+        displayName: Location
+        description: Filter by location
+        type: string
+      owner:
+        displayName: Owner
+        description: Filter by owner name
+        type: string
+      title:
+        displayName: Title
+        description: Filter by posting title
+        type: string
+      after:
+        displayName: Starting time
+        description: Filter by start time
+        type: integer
+      before:
+        displayName: Ending time
+        description: Filter by end time
+        type: integer
+        
+  /{lfgID}:
+    description: A posting for a study group
+    uriParameters:
+      lfgID:
+        description: Posting ID
+        type: integer
+        
+    get:
+      description: View a single study group posting by ID
+      body:
+        application/json:
+          schema: lfg
+    
+    delete:
+      description: Delete a study group posting
+      
+    /tweet:
+      post:
+        description: Tweet a study group posting (@TogetherWeStand)
