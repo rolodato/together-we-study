@@ -46,3 +46,6 @@ local.properties
 flows/
 target/
 **/*.mflow
+
+# Keys ans passwords
+src/main/app/mule-app.properties
