@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:jdbc-ee="http://www.mulesoft.org/schema/mule/ee/jdbc" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:twitter="http://www.mulesoft.org/schema/mule/twitter" xmlns:jdbc-ee="http://www.mulesoft.org/schema/mule/ee/jdbc" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
-http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/twitter http://www.mulesoft.org/schema/mule/twitter/2.4/mule-twitter.xsd
 http://www.mulesoft.org/schema/mule/ee/jdbc http://www.mulesoft.org/schema/mule/ee/jdbc/current/mule-jdbc-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
-http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd" version="EE-3.4.1">
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd" version="EE-3.4.1">
     <apikit:config name="apiConfig" raml="tws.raml" consoleEnabled="true" consolePath="console" doc:name="Router"/>
     <apikit:mapping-exception-strategy name="apiKitGlobalExceptionMapping">
         <apikit:mapping statusCode="404">
@@ -36,7 +37,6 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
     </apikit:mapping-exception-strategy>
     <jdbc-ee:mysql-data-source name="TWS_MySQL" user="root" password="123qwe" url="jdbc:mysql://localhost:3306/tws" transactionIsolation="UNSPECIFIED" doc:name="MySQL Data Source"/>
     <jdbc-ee:connector name="Database" dataSource-ref="TWS_MySQL" validateConnections="true" queryTimeout="-1" pollingFrequency="0" doc:name="Database">
-        <jdbc-ee:query key="Select all users" value="SELECT * FROM user"/>
         <jdbc-ee:query key="Create new user" value="INSERT INTO user (name, email, school, location)
 VALUES (#[payload.userName],
         #[payload.email],
@@ -48,26 +48,53 @@ VALUES (#[payload.owner],
         #[payload.title],
         #[payload.studySubject],
         #[payload.after],
-        #[payload.before])"/>    </jdbc-ee:connector>
+        #[payload.before])"/> 
+        <jdbc-ee:query key="Delete user by ID" value="DELETE FROM user WHERE id = #[payload.userID]"/>
+        <jdbc-ee:query key="Select posting by ID" value="SELECT * FROM lfg WHERE id = #[message.inboundProperties['lfgID']]"/>
+        <jdbc-ee:query key="Select users by criteria" value="SELECT * FROM user
+WHERE (location LIKE #['%' + payload.location + '%']
+	and school LIKE #['%' + payload.school + '%']
+	and name LIKE #['%' + payload.userName + '%'])"/>
+        <jdbc-ee:query key="Delete posting by ID" value="DELETE FROM lfg WHERE id = #[header.INBOUND.lfgID]"/>
+        <jdbc-ee:query key="Select postings by criteria" value="SELECT *
+FROM lfg
+WHERE title LIKE #['%' + payload.title + '%']
+	and studySubject LIKE #['%' + payload.studySubject + '%']
+	and startTime &gt;= #[payload.startTime]
+	and endTime &lt;= #[payload.endTime]"/>
+   </jdbc-ee:connector>
+    <twitter:config name="Twitter" consumerKey="zfmBjJ1ETa018AsZxODQ" consumerSecret="sE2esnRyS311WMwrUXuakjNylPyFk4bg15cw2iM9M" doc:name="Twitter">
+        <twitter:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
+    </twitter:config>
     <flow name="main" doc:name="main">
         <http:inbound-endpoint address="http://localhost:8081/api" doc:name="HTTP"/>
         <apikit:router config-ref="apiConfig" doc:name="APIkit Router"/>
         <exception-strategy ref="apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
     <flow name="delete:/lfg/{lfgID}:apiConfig" doc:name="delete:/lfg/{lfgID}:apiConfig">
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+        <jdbc-ee:outbound-endpoint exchange-pattern="one-way" queryKey="Delete posting by ID" queryTimeout="-1" connector-ref="Database" doc:name="Delete posting by ID"/>
+
     </flow>
     <flow name="get:/users:apiConfig" doc:name="get:/users:apiConfig">
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+        <http:body-to-parameter-map-transformer doc:name="Body to Parameter Map"/>
+        <custom-transformer returnClass="java.util.HashMap" class="rolodato.tws.transformers.UserSearchTransformer" doc:name="Java"/>
+        <jdbc-ee:outbound-endpoint exchange-pattern="request-response" queryKey="Select users by criteria" queryTimeout="-1" connector-ref="Database" doc:name="Select users by criteria"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+
     </flow>
     <flow name="get:/lfg:apiConfig" doc:name="get:/lfg:apiConfig">
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+        <http:body-to-parameter-map-transformer doc:name="Body to Parameter Map"/>
+        <custom-transformer class="rolodato.tws.transformers.LfgSearchTransformer" doc:name="Java"/>
+        <jdbc-ee:outbound-endpoint exchange-pattern="request-response" queryKey="Select postings by criteria" queryTimeout="-1" connector-ref="Database" doc:name="Select postings by criteria"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+
     </flow>
     <flow name="get:/lfg/{lfgID}:apiConfig" doc:name="get:/lfg/{lfgID}:apiConfig">
         <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
     </flow>
     <flow name="get:/users/{userID}:apiConfig" doc:name="get:/users/{userID}:apiConfig">
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+        <logger message="Payload is: #[payload], inbound headers are: #[header:INBOUND]" level="INFO" doc:name="Logger"/>
+
     </flow>
     <flow name="post:/lfg:apiConfig" doc:name="post:/lfg:apiConfig">
         <http:body-to-parameter-map-transformer doc:name="Body to Parameter Map"/>
@@ -81,6 +108,10 @@ VALUES (#[payload.owner],
 
     </flow>
     <flow name="post:/lfg/{lfgID}/tweet:apiConfig" doc:name="post:/lfg/{lfgID}/tweet:apiConfig">
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+        <jdbc-ee:outbound-endpoint exchange-pattern="one-way" queryKey="Select posting by ID" queryTimeout="-1" connector-ref="Database" doc:name="Database">
+            <jdbc-ee:transaction action="ALWAYS_BEGIN"/>
+        </jdbc-ee:outbound-endpoint>
+        <twitter:update-status config-ref="apiKitGlobalExceptionMapping" status="#[message.inboundProperties['name'] is looking for people to study" accessKey="zfmBjJ1ETa018AsZxODQ" accessSecret="sE2esnRyS311WMwrUXuakjNylPyFk4bg15cw2iM9M" doc:name="Twitter"/>
+
     </flow>
 </mule>
