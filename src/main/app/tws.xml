@@ -35,7 +35,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
             <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" />
         </apikit:mapping>
     </apikit:mapping-exception-strategy>
-    <jdbc-ee:mysql-data-source name="TWS_MySQL" user="root" password="123qwe" url="jdbc:mysql://localhost:3306/tws" transactionIsolation="UNSPECIFIED" doc:name="MySQL Data Source"/>
+    <jdbc-ee:mysql-data-source name="TWS_MySQL" user="${mysql.user}" password="${mysql.password}" url="${mysql.connection_string}" transactionIsolation="UNSPECIFIED" doc:name="MySQL Data Source"/>
     <jdbc-ee:connector name="Database" dataSource-ref="TWS_MySQL" validateConnections="true" queryTimeout="-1" pollingFrequency="0" doc:name="Database">
         <jdbc-ee:query key="Create new user" value="INSERT INTO user (name, email, school, location)
 VALUES (#[payload.userName],
@@ -63,7 +63,7 @@ WHERE title LIKE #['%' + payload.title + '%']
 	and startTime &gt;= #[payload.startTime]
 	and endTime &lt;= #[payload.endTime]"/>
    </jdbc-ee:connector>
-    <twitter:config name="Twitter" consumerKey="zfmBjJ1ETa018AsZxODQ" consumerSecret="sE2esnRyS311WMwrUXuakjNylPyFk4bg15cw2iM9M" doc:name="Twitter">
+    <twitter:config name="Twitter" consumerKey="${twitter.consumer_key}" consumerSecret="${twitter.consumer_secret}" doc:name="Twitter">
         <twitter:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </twitter:config>
     <flow name="main" doc:name="main">
@@ -111,7 +111,7 @@ WHERE title LIKE #['%' + payload.title + '%']
         <jdbc-ee:outbound-endpoint exchange-pattern="one-way" queryKey="Select posting by ID" queryTimeout="-1" connector-ref="Database" doc:name="Database">
             <jdbc-ee:transaction action="ALWAYS_BEGIN"/>
         </jdbc-ee:outbound-endpoint>
-        <twitter:update-status config-ref="apiKitGlobalExceptionMapping" status="#[message.inboundProperties['name'] is looking for people to study" accessKey="zfmBjJ1ETa018AsZxODQ" accessSecret="sE2esnRyS311WMwrUXuakjNylPyFk4bg15cw2iM9M" doc:name="Twitter"/>
+        <twitter:update-status config-ref="apiKitGlobalExceptionMapping" status="#[payload.name] is looking for people to study" accessKey="zfmBjJ1ETa018AsZxODQ" accessSecret="sE2esnRyS311WMwrUXuakjNylPyFk4bg15cw2iM9M" doc:name="Twitter"/>
 
     </flow>
 </mule>
