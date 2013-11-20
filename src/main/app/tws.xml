@@ -55,18 +55,18 @@ VALUES (#[payload.owner],
 WHERE (location LIKE #['%' + payload.location + '%']
 	and school LIKE #['%' + payload.school + '%']
 	and name LIKE #['%' + payload.userName + '%'])"/>
-        <jdbc-ee:query key="Select postings by criteria" value="SELECT *
-FROM lfg JOIN user ON lfg.owner = user.id
-WHERE title LIKE #['%' + payload.title + '%']
-	and studySubject LIKE #['%' + payload.studySubject + '%']
-	and startTime &gt;= #[payload.startTime]
-	and endTime &lt;= #[payload.endTime]
-	and location LIKE #['%' + payload.location + '%']"/>
         <jdbc-ee:query key="Select posting and user by posting ID" value="SELECT *
 FROM lfg JOIN user ON lfg.owner = user.id
 WHERE lfg.id = #[flowVars.lfgID]"/>
 
-        <jdbc-ee:query key="Delete posting by ID" value="DELETE FROM lfg WHERE id = #[flowVars.lfgID]"/>   </jdbc-ee:connector>
+        <jdbc-ee:query key="Delete posting by ID" value="DELETE FROM lfg WHERE id = #[flowVars.lfgID]"/>
+        <jdbc-ee:query key="Select postings by criteria" value="SELECT *
+FROM lfg JOIN user ON lfg.owner = user.id
+WHERE title LIKE #['%' + payload.title + '%']
+	and studySubject LIKE #['%' + payload.studySubject + '%']
+	and (startTime &gt;= #[payload.startTime] OR startTIME IS NULL)
+	and (endTime &lt;= #[payload.endTime] OR endTIME is NULL)
+	and location LIKE #['%' + payload.location + '%']"/>   </jdbc-ee:connector>
     <twitter:config name="Twitter" consumerKey="yin362UEYLybMAiiKyow" consumerSecret="SNPmw8kA3unJoul2aEKqrrwIvhkaVRnq2l7w28lQg" doc:name="Twitter" accessKey="2187710478-9IC2i15VyzpBUOBZWXkgpVxDHDBFE8lWhBAWEXh" accessSecret="j6CR7Z4xXV2tGqxg5P1qrXvGbJkYH7nqwMRwlsWLBqAJ1">
         <twitter:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </twitter:config>

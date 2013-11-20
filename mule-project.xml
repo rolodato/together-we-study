@@ -3,6 +3,4 @@
     <name>together-we-study</name>
     <description></description>
     <muleExtension name="APIkit" qualifier="org.mule.tooling.apikit"/>
-    <muleExtension name="APIkit" qualifier="org.mule.tooling.apikit"/>
-    <muleExtension name="Twitter" qualifier="org.mule.tooling.ui.contribution.twitter"/>
 </mule-project>

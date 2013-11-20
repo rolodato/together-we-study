@@ -8,7 +8,7 @@ public class LfgSearchTransformer extends AbstractTransformer {
 		
 		HashMap map = (HashMap <String, String>) src;
 		
-		for (String k : new String[]{"title", "studySubject", "owner", "before", "after"}) {
+		for (String k : new String[]{"title", "studySubject", "location"}) {
 			if (!map.containsKey(k)) {
 				map.put(k, "");
 			}
